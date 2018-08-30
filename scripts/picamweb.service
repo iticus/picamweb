@@ -1,0 +1,14 @@
+[Unit]
+Description=PiCamWeb service
+After=default.target
+
+[Service]
+User=pi
+Group=pi
+RestartSec=3
+Restart=always
+WorkingDirectory=/var/www/picamweb
+ExecStart=/usr/bin/python3 picamweb.py
+
+[Install]
+WantedBy=default.target
