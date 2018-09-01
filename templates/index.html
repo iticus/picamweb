@@ -24,7 +24,7 @@
 	-->
 	<canvas id="videoCanvas" width="{{width}}" height="{{height}}">
 	</canvas>
-	<script type="text/javascript" src="static/js/jsmpg.js"></script>
+	<script type="text/javascript" src="static/js/jsmpeg.min.js"></script>
 	<script type="text/javascript">
 		// Show loading notice
 		var canvas = document.getElementById('videoCanvas');
@@ -32,8 +32,8 @@
 		ctx.fillStyle = '#444';
 		ctx.fillText('Loading...', canvas.width/2-30, canvas.height/3);
 		// Setup the WebSocket connection and start the player
-		var client = new WebSocket('ws://' + window.location.hostname + ':' + window.location.port + '/video');
-		var player = new jsmpeg(client, {canvas:canvas});
+		var url = 'ws://' + window.location.hostname + ':' + window.location.port + '/video';
+		var player = new JSMpeg.Player(url, {canvas: canvas, disableGl: true});
 	</script>
 </body>
 </html>

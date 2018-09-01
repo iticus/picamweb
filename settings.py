@@ -5,12 +5,11 @@ Created on Aug 28, 2018
 """
 
 import logging
-from struct import Struct
 
 logging.basicConfig(level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S",
                     format="[%(asctime)s] - %(levelname)s - %(message)s")
 
-ADDRESS = "0.0.0.0"
+ADDRESS = "127.0.0.1"
 PORT = 9000
 TEMPLATE_PATH = "templates"
 STATIC_PATH = "static"
@@ -22,6 +21,3 @@ CAMERA = {
     "vflip": False,
     "hflip" : False
 }
-
-JSMPEG_MAGIC = b'jsmp'
-JSMPEG_HEADER = Struct('>4sHH')

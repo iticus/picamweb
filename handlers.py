@@ -28,11 +28,14 @@ class VideoHandler(WebSocketHandler):
     clients = set()
 
 
+    def select_subprotocol(self, subprotocols):
+        logging.info("got subprotocols %s", subprotocols)
+        subprotocol = subprotocols[0] if subprotocols else "null"
+        return subprotocol
+
+
     def open(self):
         logging.info("new ws client %s", self)
-        cfg = self.application.config
-        msg = cfg.JSMPEG_HEADER.pack(cfg.JSMPEG_MAGIC, cfg.CAMERA["width"], cfg.CAMERA["height"])
-        self.write_message(msg, binary=True)
         VideoHandler.clients.add(self)
 
 
