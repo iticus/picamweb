@@ -3,7 +3,8 @@
 ## About
 PiCamWeb is a Python based web interface for [Raspberry Pi Camera](https://www.raspberrypi.org/products/camera-module-v2/) (both *v1* and *v2* can be used). It uses websockets for data transport and [jsmpg](https://github.com/phoboslab/jsmpeg) to render the video feed in the browser.  
 [Tornado](http://www.tornadoweb.org/en/stable/) is used for the webserver and websockets, [picamera](https://github.com/waveform80/picamera) for camera recording and [ffmpeg](http://ffmpeg.org/) to encode the raw video data to MPEG1.  
-The project is inspired by the [pistreaming](https://github.com/waveform80/pistreaming) project.
+The project is inspired by the [pistreaming](https://github.com/waveform80/pistreaming) project.  
+If you need authentication for the video stream you can check my [alfred](https://github.com/iticus/alfred) project.
 
 ## Installation
 After making sure your camera module works (you can test it using `raspistill`) install dependencies:  
