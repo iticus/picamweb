@@ -4,12 +4,10 @@ Created on Aug 28, 2018
 @author: ionut
 """
 
-import io
 import logging
-import os
 import threading
 import time
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, DEVNULL
 import picamera
 
 
@@ -36,8 +34,7 @@ class BroadcastOutput():
                 "-r", str(float(camera.framerate)),
                 "-"
             ],
-            stdin=PIPE, stdout=PIPE, stderr=io.open(os.devnull, "wb"),
-            shell=False, close_fds=True
+            stdin=PIPE, stdout=PIPE, stderr=DEVNULL, shell=False, close_fds=True
         )
 
 
