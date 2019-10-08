@@ -30,7 +30,7 @@ class VideoHandler(WebSocketHandler):
 
     def select_subprotocol(self, subprotocols):
         logging.info("got subprotocols %s", subprotocols)
-        subprotocol = subprotocols[0] if subprotocols else "null"
+        subprotocol = subprotocols[0] if subprotocols else None
         return subprotocol
 
 
