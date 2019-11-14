@@ -57,25 +57,28 @@ class BroadcastThread(threading.Thread):
     Broadcast thread to read from ffmpeg output and send to connected websockets (wso)
     """
 
-    def __init__(self, converter, wso, ioloop):
+    def __init__(self, converter, wso, io_loop):
         super(BroadcastThread, self).__init__()
         self.converter = converter
         self.wso = wso
-        self.ioloop = ioloop
+        self.io_loop = io_loop
+        self.running = True
 
     def run(self):
         try:
-            while True:
+            while self.running:
                 data = self.converter.stdout.read1(32768)
                 if data:
                     def callback():
                         self.wso.broadcast(data)
-                    self.ioloop.add_callback(callback=callback)
+                    self.io_loop.add_callback(callback=callback)
                 elif self.converter.poll() is not None:
                     break
         finally:
             self.converter.stdout.close()
 
+    def stop(self):
+        self.running = False
 
 class Camera:
 
@@ -94,7 +97,7 @@ class Camera:
         self.camera.framerate = self. camset["framerate"]
         self.camera.vflip = self.camset["vflip"]
         self.camera.hflip = self.camset["hflip"]
-        time.sleep(1)  # camera warm-up time
+        time.sleep(0.1)  # camera warm-up time
         self.output = BroadcastOutput(self.camera)
         logging.info("starting broadcast thread")
         self.broadcast_thread = BroadcastThread(self.output.converter, self.wso, self.io_loop)
@@ -105,7 +108,7 @@ class Camera:
     def stop(self):
         logging.info("stopping broadcast thread")
         self.broadcast_thread.stop()
-        logging.info("stopping output process")
-        self.output.flush()
         logging.info("closing camera object")
         self.camera.close()
+        logging.info("stopping output process")
+        self.output.flush()

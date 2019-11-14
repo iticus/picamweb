@@ -4,12 +4,14 @@ Created on Aug 28, 2018
 @author: ionut
 """
 
+import datetime
 import logging
 import signal
 import sys
 import tornado
+from functools import partial
+from tornado.gen import coroutine
 
-import camera
 import handlers
 import settings
 import utils
@@ -41,6 +43,23 @@ def configure_signals():
     signal.signal(signal.SIGTERM, stopping_handler)
 
 
+@coroutine
+def camera_loop(app):
+    """
+    Check if camera is in use or not and free resources
+    :param app: tornado application instance
+    """
+    if app.camera:
+        diff = datetime.datetime.now() - handlers.VideoHandler.last_packet
+        if diff > datetime.timedelta(seconds=15):
+            try:
+                app.camera.stop()
+                app.camera = None
+            except Exception as exc:
+                logging.error("cannot stop camera %s", exc)
+    tornado.ioloop.IOLoop.instance().add_timeout(datetime.timedelta(seconds=15), partial(camera_loop, app))
+
+
 def make_app(io_loop=None):
     """
     Create and return tornado.web.Application object so it can be used in tests too
@@ -57,9 +76,7 @@ def make_app(io_loop=None):
     )
     if not io_loop:
         io_loop = tornado.ioloop.IOLoop.current()
-    cam = camera.Camera(settings.CAMERA, handlers.VideoHandler, io_loop)
-    cam.start()
-    app.camera = cam
+    app.camera = None
     app.config = settings
     app.cache = {}
     app.io_loop = io_loop
@@ -71,6 +88,7 @@ def main():
     application = make_app()
     logging.info("starting picamweb on %s:%s", application.config.ADDRESS, application.config.PORT)
     application.listen(application.config.PORT, address=application.config.ADDRESS)
+    camera_loop(application)
     if application.io_loop:
         application.io_loop.start()
     else:

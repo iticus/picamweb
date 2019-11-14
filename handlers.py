@@ -4,9 +4,12 @@ Created on Aug 28, 2018
 @author: ionut
 """
 
+import datetime
 import logging
 from tornado.web import RequestHandler
 from tornado.websocket import WebSocketHandler
+
+import camera
 
 
 class HomeHandler(RequestHandler):
@@ -25,6 +28,7 @@ class VideoHandler(WebSocketHandler):
     """
 
     clients = set()
+    last_packet = datetime.datetime.now()
 
     def select_subprotocol(self, subprotocols):
         logging.info("got subprotocols %s", subprotocols)
@@ -32,6 +36,9 @@ class VideoHandler(WebSocketHandler):
         return subprotocol
 
     def open(self):
+        if not self.application.camera:
+            self.application.camera = camera.Camera(self.application.config.CAMERA, self, self.application.io_loop)
+            self.application.camera.start()
         logging.info("new ws client %s", self)
         VideoHandler.clients.add(self)
 
@@ -53,6 +60,7 @@ class VideoHandler(WebSocketHandler):
         for client in VideoHandler.clients:
             try:
                 client.write_message(data, binary=True)
+                VideoHandler.last_packet = datetime.datetime.now()
             except Exception as exc:
                 logging.warning("loop closed for %s: %s", client, exc)
                 removable.add(client)
