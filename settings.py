@@ -19,5 +19,5 @@ CAMERA = {
     "height": 736,
     "framerate": 24,
     "vflip": False,
-    "hflip" : False
+    "hflip": False
 }

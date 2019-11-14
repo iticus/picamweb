@@ -14,7 +14,6 @@ class HomeHandler(RequestHandler):
     Handler for / - render index.html
     """
 
-
     def get(self):
         camset = self.application.config.CAMERA
         self.render("index.html", width=camset["width"], height=camset["height"])
@@ -27,26 +26,21 @@ class VideoHandler(WebSocketHandler):
 
     clients = set()
 
-
     def select_subprotocol(self, subprotocols):
         logging.info("got subprotocols %s", subprotocols)
         subprotocol = subprotocols[0] if subprotocols else "null"
         return subprotocol
 
-
     def open(self):
         logging.info("new ws client %s", self)
         VideoHandler.clients.add(self)
-
 
     def on_close(self):
         logging.info("removing ws client %s", self)
         VideoHandler.clients.remove(self)
 
-
     def on_message(self, message):
         logging.info("got ws message %s from %s", message, self)
-
 
     @classmethod
     def broadcast(cls, data):

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 	<meta name="viewport" content="width={{width}}, initial-scale=1"/>
 	<title>jsmpeg streaming</title>
 	<style type="text/css">
 		body {
-			background: "#333";
+			background-color: #333;
 			text-align: center;
 			margin-top: 10px	;
 		}
@@ -27,13 +27,13 @@
 	<script type="text/javascript" src="static/js/jsmpeg.min.js"></script>
 	<script type="text/javascript">
 		// Show loading notice
-		var canvas = document.getElementById('videoCanvas');
-		var ctx = canvas.getContext('2d');
+		let canvas = document.getElementById('videoCanvas');
+		let ctx = canvas.getContext('2d');
 		ctx.fillStyle = '#444';
 		ctx.fillText('Loading...', canvas.width/2-30, canvas.height/3);
 		// Setup the WebSocket connection and start the player
-		var url = 'ws://' + window.location.hostname + ':' + window.location.port + '/video';
-		var player = new JSMpeg.Player(url, {canvas: canvas, disableGl: true});
+		let url = 'ws://' + window.location.hostname + ':' + window.location.port + '/video';
+		let player = new JSMpeg.Player(url, {canvas: canvas, disableGl: true});
 	</script>
 </body>
 </html>

@@ -41,10 +41,10 @@ def configure_signals():
     signal.signal(signal.SIGTERM, stopping_handler)
 
 
-def make_app(ioloop=None):
+def make_app(io_loop=None):
     """
     Create and return tornado.web.Application object so it can be used in tests too
-    :param ioloop: already existing ioloop (used for testing)
+    :param io_loop: already existing ioloop (used for testing)
     :returns: application instance
     """
     app = tornado.web.Application(
@@ -55,13 +55,14 @@ def make_app(ioloop=None):
         template_path=settings.TEMPLATE_PATH,
         static_path=settings.STATIC_PATH,
     )
-    if not ioloop:
-        ioloop = tornado.ioloop.IOLoop.current()
-    cam = camera.init(settings.CAMERA, handlers.VideoHandler, ioloop)
+    if not io_loop:
+        io_loop = tornado.ioloop.IOLoop.current()
+    cam = camera.Camera(settings.CAMERA, handlers.VideoHandler, io_loop)
+    cam.start()
     app.camera = cam
     app.config = settings
     app.cache = {}
-    app.ioloop = ioloop
+    app.io_loop = io_loop
     return app
 
 
@@ -70,8 +71,8 @@ def main():
     application = make_app()
     logging.info("starting picamweb on %s:%s", application.config.ADDRESS, application.config.PORT)
     application.listen(application.config.PORT, address=application.config.ADDRESS)
-    if application.ioloop:
-        application.ioloop.start()
+    if application.io_loop:
+        application.io_loop.start()
     else:
         tornado.ioloop.IOLoop.instance().start()
 

@@ -11,11 +11,10 @@ from subprocess import Popen, PIPE, DEVNULL
 import picamera
 
 
-class BroadcastOutput():
+class BroadcastOutput:
     """
     Run background ffmpeg process to generate MPEG1 data from picamera
     """
-
 
     def __init__(self, camera):
         logging.info("spawning background conversion process")
@@ -37,14 +36,12 @@ class BroadcastOutput():
             stdin=PIPE, stdout=PIPE, stderr=DEVNULL, shell=False, close_fds=True
         )
 
-
     def write(self, data):
         """
         Write data output
         :param data: video data to write
         """
         self.converter.stdin.write(data)
-
 
     def flush(self):
         """
@@ -60,13 +57,11 @@ class BroadcastThread(threading.Thread):
     Broadcast thread to read from ffmpeg output and send to connected websockets (wso)
     """
 
-
     def __init__(self, converter, wso, ioloop):
         super(BroadcastThread, self).__init__()
         self.converter = converter
         self.wso = wso
         self.ioloop = ioloop
-
 
     def run(self):
         try:
@@ -82,23 +77,35 @@ class BroadcastThread(threading.Thread):
             self.converter.stdout.close()
 
 
-def init(camset, wso, ioloop):
-    """
-    Initialize camera and broadcast thread
-    :param camset: camera settings object (from settings module)
-    :param wso: WebSocket handler to use for broadcasting data
-    :param ioloop: tornado IOLoop instance
-    """
-    logging.info("initializing camera")
-    camera = picamera.PiCamera()
-    camera.resolution = (camset["width"], camset["height"])
-    camera.framerate = camset["framerate"]
-    camera.vflip = camset["vflip"]
-    camera.hflip = camset["hflip"]
-    time.sleep(1) # camera warm-up time
-    output = BroadcastOutput(camera)
-    logging.info("starting broadcast thread")
-    broadcast_thread = BroadcastThread(output.converter, wso, ioloop)
-    camera.start_recording(output, "yuv")
-    broadcast_thread.start()
-    return camera, broadcast_thread
+class Camera:
+
+    def __init__(self, camset, wso, io_loop):
+        self.camset = camset
+        self.wso = wso
+        self.io_loop = io_loop
+        self.camera = None
+        self.output = None
+        self.broadcast_thread = None
+
+    def start(self):
+        logging.info("initializing camera")
+        self.camera = picamera.PiCamera()
+        self.camera.resolution = (self.camset["width"], self.camset["height"])
+        self.camera.framerate = self. camset["framerate"]
+        self.camera.vflip = self.camset["vflip"]
+        self.camera.hflip = self.camset["hflip"]
+        time.sleep(1)  # camera warm-up time
+        self.output = BroadcastOutput(self.camera)
+        logging.info("starting broadcast thread")
+        self.broadcast_thread = BroadcastThread(self.output.converter, self.wso, self.io_loop)
+        self.camera.start_recording(self.output, "yuv")
+        self.broadcast_thread.start()
+        return self
+
+    def stop(self):
+        logging.info("stopping broadcast thread")
+        self.broadcast_thread.stop()
+        logging.info("stopping output process")
+        self.output.flush()
+        logging.info("closing camera object")
+        self.camera.close()
