@@ -97,7 +97,7 @@ class Camera:
         self.camera.framerate = self. camset["framerate"]
         self.camera.vflip = self.camset["vflip"]
         self.camera.hflip = self.camset["hflip"]
-        time.sleep(0.1)  # camera warm-up time
+        time.sleep(0.5)  # camera warm-up time
         self.output = BroadcastOutput(self.camera)
         logging.info("starting broadcast thread")
         self.broadcast_thread = BroadcastThread(self.output.converter, self.wso, self.io_loop)
