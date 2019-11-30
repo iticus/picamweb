@@ -37,6 +37,8 @@ class VideoHandler(WebSocketHandler):
 
     def open(self):
         if not self.application.camera:
+            # prevent camera_loop from stopping the camera while starting
+            VideoHandler.last_packet = datetime.datetime.now()
             self.application.camera = camera.Camera(self.application.config.CAMERA, self, self.application.io_loop)
             self.application.camera.start()
         logging.info("new ws client %s", self)
