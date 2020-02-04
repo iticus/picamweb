@@ -10,7 +10,7 @@ server {
         access_log off;
     }
 
-	location /video {
+	location ~ ^/(image|video)/? {
 	    proxy_pass http://127.0.0.1:9000;
 	    proxy_http_version 1.1;
 	    proxy_set_header Host $host;
