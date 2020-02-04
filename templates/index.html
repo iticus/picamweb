@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta name="viewport" content="width={{width}}, initial-scale=1"/>
-	<title>jsmpeg streaming</title>
+	<title>picamweb test page</title>
 	<style type="text/css">
 		body {
 			background-color: #333;
@@ -24,16 +24,54 @@
 	-->
 	<canvas id="videoCanvas" width="{{width}}" height="{{height}}">
 	</canvas>
-	<script type="text/javascript" src="static/js/jsmpeg.min.js"></script>
-	<script type="text/javascript">
-		// Show loading notice
-		let canvas = document.getElementById('videoCanvas');
-		let ctx = canvas.getContext('2d');
-		ctx.fillStyle = '#444';
-		ctx.fillText('Loading...', canvas.width/2-30, canvas.height/3);
-		// Setup the WebSocket connection and start the player
-		let url = 'ws://' + window.location.hostname + ':' + window.location.port + '/video';
-		let player = new JSMpeg.Player(url, {canvas: canvas, disableGl: true});
-	</script>
+    {% if ffmpeg %}
+        <script type="text/javascript" src="static/js/jsmpeg.min.js"></script>
+        <script type="text/javascript">
+            // Show loading notice
+            let canvas = document.getElementById('videoCanvas');
+            let ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#444';
+            ctx.fillText('Loading...', canvas.width/2-30, canvas.height/3);
+            // Setup the WebSocket connection and start the player
+            let url = 'ws://' + window.location.hostname + ':' + window.location.port + '/video';
+            let player = new JSMpeg.Player(url, {canvas: canvas, disableGl: true});
+        </script>
+    {% else %}
+        <script type="text/javascript">
+            function ws_proto() {
+                return location.protocol.match(/^https/) ? "wss://" : "ws://";
+            }
+            let canvas = document.getElementById('videoCanvas');
+            let ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#444';
+            ctx.fillText('Loading...', canvas.width/2-30, canvas.height/3);
+            socket = new WebSocket(ws_proto() + window.location.hostname + ':' + window.location.port + '/image');
+            socket.binaryType = 'arraybuffer';
+            socket.onopen = function () {
+                socket.send('?');
+            };
+            socket.onmessage = function (msg) {
+                let blob  = new Blob([msg.data], {type: "image/jpeg"});
+                let img = new Image();
+                img.onload = function (e) {
+                    ctx.drawImage(img, 0, 0);
+                    window.URL.revokeObjectURL(img.src);
+                    if (canvas.width !== img.width) {
+                        canvas.width = img.width;
+                    }
+                    if (canvas.height !== img.height) {
+                        canvas.height = img.height;
+                    }
+                    img = null;
+                };
+                img.onerror = img.onabort = function () {
+                    img = null;
+                    socket.close();
+                };
+                img.src = window.URL.createObjectURL(blob);
+                socket.send('?');
+            }
+        </script>
+    {% end %}
 </body>
 </html>

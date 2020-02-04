@@ -4,14 +4,49 @@ Created on Aug 28, 2018
 @author: ionut
 """
 
+# import datetime
 import logging
 import threading
 import time
+from io import BytesIO
 from subprocess import Popen, PIPE, DEVNULL
 import picamera
 
 
-class BroadcastOutput:
+class ImageBroadcastThread(threading.Thread):
+    """
+    Broadcast thread to read from image data and send to connected websockets (wso)
+    """
+
+    def __init__(self, camera, wso, io_loop):
+        super(ImageBroadcastThread, self).__init__()
+        self.camera = camera
+        self.output = BytesIO()
+        self.wso = wso
+        self.io_loop = io_loop
+        self.running = True
+
+    def run(self):
+        try:
+            while self.running:
+                self.output.seek(0)
+                self.camera.capture(self.output, "jpeg")
+                data = self.output.getvalue()
+                self.output.truncate(0)
+                logging.debug("got %d bytes of image data from camera", len(data))
+                if data:
+                    def callback():
+                        self.wso.broadcast(data)
+                    self.io_loop.add_callback(callback=callback)
+                time.sleep(0.01)
+        finally:
+            self.output.close()
+
+    def stop(self):
+        self.running = False
+
+
+class VideoBroadcastOutput:
     """
     Run background ffmpeg process to generate MPEG1 data from picamera
     """
@@ -52,14 +87,14 @@ class BroadcastOutput:
         self.converter.wait()
 
 
-class BroadcastThread(threading.Thread):
+class VideoBroadcastThread(threading.Thread):
     """
     Broadcast thread to read from ffmpeg output and send to connected websockets (wso)
     """
 
-    def __init__(self, converter, wso, io_loop):
-        super(BroadcastThread, self).__init__()
-        self.converter = converter
+    def __init__(self, output, wso, io_loop):
+        super(VideoBroadcastThread, self).__init__()
+        self.output = output
         self.wso = wso
         self.io_loop = io_loop
         self.running = True
@@ -80,6 +115,7 @@ class BroadcastThread(threading.Thread):
     def stop(self):
         self.running = False
 
+
 class Camera:
 
     def __init__(self, camset, wso, io_loop):
@@ -97,12 +133,20 @@ class Camera:
         self.camera.framerate = self. camset["framerate"]
         self.camera.vflip = self.camset["vflip"]
         self.camera.hflip = self.camset["hflip"]
-        time.sleep(0.5)  # camera warm-up time
-        self.output = BroadcastOutput(self.camera)
-        logging.info("starting broadcast thread")
-        self.broadcast_thread = BroadcastThread(self.output.converter, self.wso, self.io_loop)
-        self.camera.start_recording(self.output, "yuv")
-        self.broadcast_thread.start()
+        if self.camset["ffmpeg"]:
+            time.sleep(0.5)  # camera warm-up time
+            self.output = VideoBroadcastOutput(self.camera)
+            logging.info("starting broadcast thread")
+            self.broadcast_thread = VideoBroadcastThread(self.output.converter, self.wso, self.io_loop)
+            self.camera.start_recording(self.output, "yuv")
+            self.broadcast_thread.start()
+        else:
+            self.camera.start_preview()
+            time.sleep(0.1)
+            # self.camera.annotate_background = picamera.Color("black")
+            # self.camera.annotate_text = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self.broadcast_thread = ImageBroadcastThread(self.camera, self.wso, self.io_loop)
+            self.broadcast_thread.start()
         return self
 
     def stop(self):
@@ -111,4 +155,5 @@ class Camera:
         logging.info("closing camera object")
         self.camera.close()
         logging.info("stopping output process")
-        self.output.flush()
+        if self.output:
+            self.output.flush()

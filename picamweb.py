@@ -50,7 +50,10 @@ def camera_loop(app):
     :param app: tornado application instance
     """
     if app.camera:
-        diff = datetime.datetime.now() - handlers.VideoHandler.last_packet
+        if app.config.CAMERA["ffmpeg"]:
+            diff = datetime.datetime.now() - handlers.VideoHandler.last_packet
+        else:
+            diff = datetime.datetime.now() - handlers.ImageHandler.last_packet
         if diff > datetime.timedelta(seconds=15):
             try:
                 app.camera.stop()
@@ -69,6 +72,7 @@ def make_app(io_loop=None):
     app = tornado.web.Application(
         [
             (r"/", handlers.HomeHandler),
+            (r"/image/?", handlers.ImageHandler),
             (r"/video/?", handlers.VideoHandler)
         ],
         template_path=settings.TEMPLATE_PATH,
