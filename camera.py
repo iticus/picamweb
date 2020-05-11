@@ -30,7 +30,7 @@ class ImageBroadcastThread(threading.Thread):
         try:
             while self.running:
                 self.output.seek(0)
-                self.camera.capture(self.output, "jpeg")
+                self.camera.capture(self.output, "jpeg", quality=15, thumbnail=None, bayer=False)
                 data = self.output.getvalue()
                 self.output.truncate(0)
                 logging.debug("got %d bytes of image data from camera", len(data))

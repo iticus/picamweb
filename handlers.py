@@ -51,7 +51,8 @@ class ImageHandler(WebSocketHandler):
         ImageHandler.clients.remove(self)
 
     def on_message(self, message):
-        logging.debug("got ws message %s from %s", message, self)
+        if message != "?":
+            logging.info("got ws message %s from %s", message, self)
 
     @classmethod
     def broadcast(cls, data):
